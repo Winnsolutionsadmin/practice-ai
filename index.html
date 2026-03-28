@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PracticeAI — Run Your Practice. Let AI Handle the Rest.</title>
+  <meta name="description" content="AI automation for medical and dental practices. Stop losing $150K/year to no-shows, slow insurance verification, and paperwork. PracticeAI handles it all." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --surface2: #1a2236;
+      --blue: #2563eb;
+      --teal: #0d9488;
+      --white: #f8fafc;
+      --muted: #94a3b8;
+      --green: #10b981;
+      --gold: #d4a843;
+      --border: rgba(255,255,255,0.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ---- TYPOGRAPHY ---- */
+    h1, h2, h3, .serif { font-family: 'Fraunces', serif; }
+    .mono { font-family: 'DM Mono', monospace; }
+
+    /* ---- CANVAS ---- */
+    #hero-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      opacity: 0.45;
+    }
+
+    /* ---- NAV ---- */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      padding: 1.25rem 2rem;
+      background: rgba(10,15,30,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-family: 'Fraunces', serif; font-size: 1.35rem; font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; font-weight: 700;
+      font-family: 'DM Mono', monospace;
+    }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      color: var(--muted); font-size: 0.9rem;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--white); }
+    .nav-cta {
+      background: var(--blue); color: #fff;
+      padding: 0.55rem 1.25rem; border-radius: 6px;
+      font-size: 0.88rem; font-weight: 500;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .nav-cta:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+    /* ---- HERO ---- */
+    #hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      padding: 8rem 2rem 5rem;
+      overflow: hidden;
+    }
+    .hero-bg-gradient {
+      position: absolute; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(37,99,235,0.18) 0%, transparent 65%),
+                  radial-gradient(ellipse 50% 40% at 80% 80%, rgba(13,148,136,0.12) 0%, transparent 60%);
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      max-width: 900px; text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.3);
+      padding: 0.35rem 1rem; border-radius: 100px;
+      font-size: 0.8rem; color: #93c5fd; letter-spacing: 0.04em;
+      text-transform: uppercase; font-family: 'DM Mono', monospace;
+      margin-bottom: 1.75rem;
+    }
+    .pulse-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--teal);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }
+
+    h1 {
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.5rem;
+    }
+    .h1-em { font-style: italic; font-weight: 300; color: #93c5fd; }
+    .h1-accent {
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--muted); max-width: 640px; margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+    .hero-sub strong { color: var(--white); }
+
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem; }
+    .btn-primary {
+      background: var(--blue); color: #fff;
+      padding: 0.9rem 2rem; border-radius: 8px;
+      font-size: 1rem; font-weight: 500; text-decoration: none;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(37,99,235,0.4); }
+    .btn-secondary {
+      background: transparent; color: var(--white);
+      padding: 0.9rem 2rem; border-radius: 8px;
+      font-size: 1rem; font-weight: 500; text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.3); }
+
+    .hero-stats {
+      display: flex; gap: 2.5rem; justify-content: center; flex-wrap: wrap;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-num {
+      font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 700;
+      color: var(--white);
+    }
+    .hero-stat-num span { color: var(--teal); }
+    .hero-stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* ---- SECTION BASE ---- */
+    section { padding: 5rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--teal); margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.9rem, 4vw, 2.9rem);
+      font-weight: 700; line-height: 1.15;
+      letter-spacing: -0.02em; margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--muted); max-width: 540px; line-height: 1.7; margin-bottom: 3rem; }
+
+    /* ---- PAIN POINTS ---- */
+    #pain { background: var(--surface); }
+    .pain-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1.5rem; }
+    .pain-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem;
+      position: relative; overflow: hidden;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+    .pain-card:hover { transform: translateY(-4px); border-color: rgba(37,99,235,0.3); }
+    .pain-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .pain-card:hover::before { opacity: 1; }
+    .pain-icon {
+      width: 48px; height: 48px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1.25rem;
+    }
+    .pain-card h3 { font-family: 'Fraunces', serif; font-size: 1.2rem; margin-bottom: 0.6rem; }
+    .pain-card p { color: var(--muted); font-size: 0.93rem; line-height: 1.65; }
+    .pain-cost {
+      margin-top: 1rem; padding: 0.6rem 1rem;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 6px; font-size: 0.8rem; color: #fca5a5;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ---- HOW IT WORKS ---- */
+    .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 1.5rem; }
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem;
+      position: relative;
+    }
+    .step-num {
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--teal); letter-spacing: 0.08em;
+      margin-bottom: 1rem;
+    }
+    .step-card h3 { font-family: 'Fraunces', serif; font-size: 1.15rem; margin-bottom: 0.6rem; }
+    .step-card p { color: var(--muted); font-size: 0.93rem; line-height: 1.65; }
+    .step-features { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.45rem; }
+    .step-feature { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted); }
+    .step-feature::before { content: '✓'; color: var(--green); font-size: 0.75rem; flex-shrink: 0; }
+
+    /* ---- ROI CALCULATOR ---- */
+    #calculator { background: var(--surface); }
+    .calc-container {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 2.5rem;
+      max-width: 720px; margin: 0 auto;
+    }
+    .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    .calc-field label {
+      display: block; font-size: 0.8rem;
+      color: var(--muted); margin-bottom: 0.5rem;
+      font-family: 'DM Mono', monospace; letter-spacing: 0.04em;
+    }
+    .calc-field input, .calc-field select {
+      width: 100%; padding: 0.75rem 1rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    .calc-field input:focus, .calc-field select:focus { border-color: var(--blue); }
+    .calc-results {
+      background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 10px; padding: 1.5rem;
+    }
+    .calc-results-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+    .calc-result-item { text-align: center; }
+    .calc-result-num {
+      font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 700;
+      color: var(--teal); display: block;
+    }
+    .calc-result-label { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* ---- PRICING ---- */
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 1.5rem; }
+    .pricing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem;
+      position: relative; transition: all 0.3s;
+    }
+    .pricing-card.featured {
+      background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(13,148,136,0.1));
+      border-color: rgba(37,99,235,0.4);
+      transform: scale(1.02);
+    }
+    .pricing-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(90deg, var(--blue), var(--teal));
+      color: white; font-size: 0.72rem; font-weight: 600;
+      padding: 0.3rem 1rem; border-radius: 100px; letter-spacing: 0.06em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .pricing-name { font-family: 'Fraunces', serif; font-size: 1.2rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .pricing-desc { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .pricing-price {
+      margin-bottom: 1.5rem; display: flex; align-items: baseline; gap: 0.2rem;
+    }
+    .price-amount { font-family: 'Fraunces', serif; font-size: 2.6rem; font-weight: 700; }
+    .price-period { color: var(--muted); font-size: 0.85rem; }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.75rem; }
+    .pricing-feature { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.9rem; }
+    .pricing-feature .check { color: var(--green); flex-shrink: 0; margin-top: 0.1rem; }
+    .pricing-feature .x-mark { color: #6b7280; flex-shrink: 0; margin-top: 0.1rem; }
+    .pricing-cta {
+      display: block; text-align: center;
+      padding: 0.8rem; border-radius: 8px;
+      font-weight: 500; text-decoration: none;
+      font-size: 0.95rem; transition: all 0.2s;
+    }
+    .pricing-cta.primary { background: var(--blue); color: white; }
+    .pricing-cta.primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+    .pricing-cta.outline { border: 1px solid rgba(255,255,255,0.15); color: var(--white); }
+    .pricing-cta.outline:hover { background: rgba(255,255,255,0.06); }
+
+    /* ---- TESTIMONIALS ---- */
+    #testimonials { background: var(--surface); }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1.5rem; }
+    .testimonial-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem;
+    }
+    .testimonial-stars { color: var(--gold); font-size: 1rem; letter-spacing: 0.1em; margin-bottom: 1rem; }
+    .testimonial-quote { font-size: 0.97rem; line-height: 1.7; color: var(--white); margin-bottom: 1.5rem; font-style: italic; }
+    .testimonial-author { display: flex; align-items: center; gap: 0.75rem; }
+    .author-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 0.85rem;
+    }
+    .author-name { font-weight: 600; font-size: 0.9rem; }
+    .author-title { font-size: 0.8rem; color: var(--muted); }
+
+    /* ---- FAQ ---- */
+    .faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .faq-question {
+      padding: 1.25rem 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; font-weight: 500; font-size: 0.97rem;
+      gap: 1rem;
+    }
+    .faq-question:hover { background: var(--surface2); }
+    .faq-icon { flex-shrink: 0; transition: transform 0.3s; color: var(--teal); font-size: 1.2rem; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+    .faq-answer { display: none; padding: 0 1.5rem 1.25rem; color: var(--muted); font-size: 0.93rem; line-height: 1.7; }
+    .faq-item.open .faq-answer { display: block; }
+
+    /* ---- CTA ---- */
+    #cta {
+      background: linear-gradient(135deg, rgba(37,99,235,0.15), rgba(13,148,136,0.1));
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: center;
+    }
+    .cta-title { font-family: 'Fraunces', serif; font-size: clamp(2rem,5vw,3.5rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 1rem; }
+    .cta-sub { color: var(--muted); font-size: 1.05rem; max-width: 540px; margin: 0 auto 2.5rem; line-height: 1.7; }
+    .guarantee {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8rem; color: var(--muted); margin-top: 1rem;
+    }
+
+    /* ---- CONTACT FORM ---- */
+    #contact { background: var(--surface); }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .contact-form {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 2rem;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-field { margin-bottom: 1rem; }
+    .form-field label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.4rem; font-family: 'DM Mono', monospace; }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%; padding: 0.75rem 1rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s; resize: none;
+    }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--blue); }
+    .form-submit {
+      width: 100%; background: var(--blue); color: white;
+      padding: 0.9rem; border-radius: 8px;
+      border: none; cursor: pointer; font-size: 1rem; font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .form-submit:hover { background: #1d4ed8; transform: translateY(-1px); }
+    .contact-info { display: flex; flex-direction: column; gap: 2rem; }
+    .contact-info-item { display: flex; align-items: flex-start; gap: 1rem; }
+    .contact-info-icon {
+      width: 42px; height: 42px; border-radius: 8px;
+      background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+    .contact-info-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.2rem; font-family: 'DM Mono', monospace; }
+    .contact-info-value { font-size: 0.97rem; font-weight: 500; }
+
+    /* ---- FOOTER ---- */
+    footer {
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 3rem 1.5rem;
+    }
+    .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+    .footer-brand { display: flex; align-items: center; gap: 0.6rem; }
+    .footer-brand-name { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; }
+    .footer-links { display: flex; gap: 2rem; }
+    .footer-links a { color: var(--muted); font-size: 0.85rem; text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--white); }
+    .footer-copy { color: var(--muted); font-size: 0.8rem; }
+
+    /* ---- SCROLL REVEAL ---- */
+    .reveal { opacity: 0; transform: translateY(32px); transition: opacity 0.65s ease, transform 0.65s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+
+    /* ---- METRIC TICKER ---- */
+    .metric-ticker {
+      background: rgba(10,15,30,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 0; overflow: hidden;
+      white-space: nowrap;
+    }
+    .ticker-inner { display: inline-flex; gap: 4rem; animation: ticker 25s linear infinite; }
+    .ticker-item { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-family: 'DM Mono', monospace; }
+    .ticker-val { color: var(--teal); font-weight: 500; }
+    .ticker-label { color: var(--muted); }
+    @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .calc-grid { grid-template-columns: 1fr; }
+      .calc-results-grid { grid-template-columns: 1fr; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- METRIC TICKER -->
+  <div class="metric-ticker">
+    <div class="ticker-inner" id="ticker">
+      <span class="ticker-item"><span class="ticker-val">$150,000</span><span class="ticker-label">avg annual loss to no-shows</span></span>
+      <span class="ticker-item"><span class="ticker-val">78%</span><span class="ticker-label">of no-shows preventable with better reminders</span></span>
+      <span class="ticker-item"><span class="ticker-val">4.6 hrs/day</span><span class="ticker-label">front desk time on phone</span></span>
+      <span class="ticker-item"><span class="ticker-val">90%</span><span class="ticker-label">of claim denials from verification errors</span></span>
+      <span class="ticker-item"><span class="ticker-val">340%</span><span class="ticker-label">average first-year ROI</span></span>
+      <span class="ticker-item"><span class="ticker-val">2.1 hrs</span><span class="ticker-label">saved per staff member per day</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item"><span class="ticker-val">$150,000</span><span class="ticker-label">avg annual loss to no-shows</span></span>
+      <span class="ticker-item"><span class="ticker-val">78%</span><span class="ticker-label">of no-shows preventable with better reminders</span></span>
+      <span class="ticker-item"><span class="ticker-val">4.6 hrs/day</span><span class="ticker-label">front desk time on phone</span></span>
+      <span class="ticker-item"><span class="ticker-val">90%</span><span class="ticker-label">of claim denials from verification errors</span></span>
+      <span class="ticker-item"><span class="ticker-val">340%</span><span class="ticker-label">average first-year ROI</span></span>
+      <span class="ticker-item"><span class="ticker-val">2.1 hrs</span><span class="ticker-label">saved per staff member per day</span></span>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <div class="logo-icon">P+</div>
+      PracticeAI
+    </div>
+    <div class="nav-links">
+      <a href="#pain">Problems</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="#contact" class="nav-cta">Get a Demo</a>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-bg-gradient"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><span class="pulse-dot"></span>Built for Medical &amp; Dental Practices</div>
+      <h1>
+        Run your practice.<br>
+        <span class="h1-em">Let AI handle</span><br>
+        <span class="h1-accent">the rest.</span>
+      </h1>
+      <p class="hero-sub">
+        Your practice loses <strong>$150,000+ per year</strong> to no-shows, insurance verification failures, and phone tag. PracticeAI eliminates all of it — before the patient walks in the door.
+      </p>
+      <div class="hero-ctas">
+        <a href="#contact" class="btn-primary">Book a Free Demo ›</a>
+        <a href="#calculator" class="btn-secondary">Calculate My ROI</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num"><span>340</span>%</div>
+          <div class="hero-stat-label">Average First-Year ROI</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><span>83</span>%</div>
+          <div class="hero-stat-label">No-Show Reduction</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><span>2.1</span>hrs</div>
+          <div class="hero-stat-label">Saved Per Staff/Day</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-num"><span>14</span>min</div>
+          <div class="hero-stat-label">Avg Insurance Verification</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAIN POINTS -->
+  <section id="pain">
+    <div class="container">
+      <p class="section-label reveal">The real cost of running a practice</p>
+      <h2 class="section-title reveal">Three problems bleeding<br>your practice dry</h2>
+      <p class="section-sub reveal">Every practice owner knows the feeling. The problems are predictable. The losses are preventable.</p>
+      <div class="pain-grid">
+        <div class="pain-card reveal reveal-delay-1">
+          <div class="pain-icon" style="background:rgba(239,68,68,0.1)">📅</div>
+          <h3>No-Shows and Last-Minute Cancellations</h3>
+          <p>A no-show isn't just an empty chair — it's a blocked appointment slot that can't be filled, a provider sitting idle, and a patient whose health deteriorated while you waited. Most practices run 15–22% no-show rates and treat it as unavoidable.</p>
+          <div class="pain-cost">Average cost: $150,000–$280,000/year per practice</div>
+        </div>
+        <div class="pain-card reveal reveal-delay-2">
+          <div class="pain-icon" style="background:rgba(251,191,36,0.1)">🏥</div>
+          <h3>Insurance Verification Chaos</h3>
+          <p>Your front desk spends 90 minutes per day calling insurance companies on hold. 90% of claim denials trace back to eligibility errors that could have been caught before the patient arrived. Each denial costs $25+ to rework. Some never get paid.</p>
+          <div class="pain-cost">Average cost: $40,000–$80,000/year in denied claims</div>
+        </div>
+        <div class="pain-card reveal reveal-delay-3">
+          <div class="pain-icon" style="background:rgba(13,148,136,0.1)">📋</div>
+          <h3>Patient Intake and Follow-Up Falling Through the Cracks</h3>
+          <p>Paper intake forms, faxed records, duplicate data entry, patients who never got their recall notice, post-visit instructions that went unread. Every manual touchpoint is a point of failure. And a missed recall appointment is a patient you've lost.</p>
+          <div class="pain-cost">Average cost: 30% of eligible recall patients never return</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works">
+    <div class="container">
+      <p class="section-label reveal">The system</p>
+      <h2 class="section-title reveal">PracticeAI runs three<br>interlocking systems</h2>
+      <p class="section-sub reveal">Not another standalone app. An AI layer that integrates with your existing setup and runs continuously.</p>
+      <div class="steps-grid">
+        <div class="step-card reveal reveal-delay-1">
+          <div class="step-num">SYSTEM 01 — PATIENT FLOW</div>
+          <h3>Before the Visit</h3>
+          <p>PracticeAI handles everything before the patient walks in — so your staff walks in to a ready morning instead of a chaotic one.</p>
+          <div class="step-features">
+            <div class="step-feature">AI appointment booking (24/7, voice + text + online)</div>
+            <div class="step-feature">Automated multi-channel reminders (SMS + email + voice)</div>
+            <div class="step-feature">Insurance pre-verification (14-min average, vs. 90 min manual)</div>
+            <div class="step-feature">Digital intake forms sent 48 hrs before appointment</div>
+            <div class="step-feature">Waitlist auto-fill when cancellations come in</div>
+          </div>
+        </div>
+        <div class="step-card reveal reveal-delay-2">
+          <div class="step-num">SYSTEM 02 — DAY-OF OPERATIONS</div>
+          <h3>During the Visit</h3>
+          <p>Your front desk focuses on the patient in front of them — not the phone, the fax, or the follow-up queue.</p>
+          <div class="step-features">
+            <div class="step-feature">Completed digital intake pre-loaded in your EHR</div>
+            <div class="step-feature">Co-pay + balance collection reminders sent automatically</div>
+            <div class="step-feature">Real-time patient communication (running late? AI handles it)</div>
+            <div class="step-feature">Post-visit care instructions delivered immediately</div>
+            <div class="step-feature">Review generation requests sent to satisfied patients</div>
+          </div>
+        </div>
+        <div class="step-card reveal reveal-delay-3">
+          <div class="step-num">SYSTEM 03 — PATIENT RETENTION</div>
+          <h3>After the Visit</h3>
+          <p>Most practices lose 30% of eligible recall patients because nobody followed up. PracticeAI closes the loop.</p>
+          <div class="step-features">
+            <div class="step-feature">Automated recall campaigns (6-mo cleanings, annual physicals)</div>
+            <div class="step-feature">Chronic disease management follow-up sequences</div>
+            <div class="step-feature">Lapsed patient reactivation (12–24 month inactive)</div>
+            <div class="step-feature">Birthday + milestone campaigns</div>
+            <div class="step-feature">Monthly practice performance reporting</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROI CALCULATOR -->
+  <section id="calculator">
+    <div class="container">
+      <p class="section-label reveal" style="text-align:center">ROI Calculator</p>
+      <h2 class="section-title reveal" style="text-align:center">What is your practice<br>losing right now?</h2>
+      <p class="section-sub reveal" style="text-align:center;max-width:480px;margin-left:auto;margin-right:auto">Enter your numbers. See the math.</p>
+
+      <div class="calc-container reveal">
+        <div class="calc-grid">
+          <div class="calc-field">
+            <label>MONTHLY APPOINTMENTS</label>
+            <input type="number" id="calc-appts" value="400" min="50" max="5000" oninput="calcROI()" />
+          </div>
+          <div class="calc-field">
+            <label>AVERAGE APPOINTMENT VALUE ($)</label>
+            <input type="number" id="calc-value" value="185" min="50" max="2000" oninput="calcROI()" />
+          </div>
+          <div class="calc-field">
+            <label>CURRENT NO-SHOW RATE (%)</label>
+            <input type="number" id="calc-noshows" value="18" min="0" max="50" oninput="calcROI()" />
+          </div>
+          <div class="calc-field">
+            <label>NUMBER OF FRONT DESK STAFF</label>
+            <input type="number" id="calc-staff" value="3" min="1" max="20" oninput="calcROI()" />
+          </div>
+        </div>
+        <div class="calc-results">
+          <p style="font-family:'DM Mono',monospace;font-size:0.75rem;color:var(--muted);letter-spacing:0.06em;margin-bottom:1.25rem;text-transform:uppercase">Your Estimated Annual Recovery with PracticeAI</p>
+          <div class="calc-results-grid">
+            <div class="calc-result-item">
+              <span class="calc-result-num" id="calc-noshowrecovery">$0</span>
+              <div class="calc-result-label">Recovered from No-Shows</div>
+            </div>
+            <div class="calc-result-item">
+              <span class="calc-result-num" id="calc-staffsavings">$0</span>
+              <div class="calc-result-label">Staff Time Recovered</div>
+            </div>
+            <div class="calc-result-item">
+              <span class="calc-result-num" id="calc-totalroi">$0</span>
+              <div class="calc-result-label">Total Annual Value</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="container">
+      <p class="section-label reveal">Pricing</p>
+      <h2 class="section-title reveal">Simple pricing.<br>Transparent ROI.</h2>
+      <p class="section-sub reveal">Every plan includes a 90-day performance guarantee. If you don't recover at least 3x our fee in the first 90 days, we refund the difference.</p>
+      <div class="pricing-grid">
+        <div class="pricing-card reveal reveal-delay-1">
+          <div class="pricing-name">Foundation</div>
+          <div class="pricing-desc">Small practices, 1–2 providers. Core no-show prevention and intake automation.</div>
+          <div class="pricing-price">
+            <span class="price-amount">$999</span>
+            <span class="price-period">/month</span>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="check">✓</span> AI appointment reminders (SMS + email)</li>
+            <li class="pricing-feature"><span class="check">✓</span> Digital intake forms</li>
+            <li class="pricing-feature"><span class="check">✓</span> Basic insurance verification</li>
+            <li class="pricing-feature"><span class="check">✓</span> Review generation (post-visit)</li>
+            <li class="pricing-feature"><span class="check">✓</span> Monthly reporting</li>
+            <li class="pricing-feature"><span class="x-mark">✗</span> Recall campaigns</li>
+            <li class="pricing-feature"><span class="x-mark">✗</span> Waitlist management</li>
+          </ul>
+          <a href="#contact" class="pricing-cta outline">Get Started</a>
+        </div>
+        <div class="pricing-card featured reveal reveal-delay-2">
+          <div class="pricing-badge">Most Popular</div>
+          <div class="pricing-name">Full Practice</div>
+          <div class="pricing-desc">2–5 providers. Complete patient flow automation from booking to recall.</div>
+          <div class="pricing-price">
+            <span class="price-amount">$1,999</span>
+            <span class="price-period">/month</span>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="check">✓</span> Everything in Foundation</li>
+            <li class="pricing-feature"><span class="check">✓</span> Full insurance pre-verification</li>
+            <li class="pricing-feature"><span class="check">✓</span> Recall campaign automation</li>
+            <li class="pricing-feature"><span class="check">✓</span> Waitlist auto-fill</li>
+            <li class="pricing-feature"><span class="check">✓</span> Chronic care follow-up sequences</li>
+            <li class="pricing-feature"><span class="check">✓</span> Lapsed patient reactivation</li>
+            <li class="pricing-feature"><span class="check">✓</span> Dedicated account manager</li>
+          </ul>
+          <a href="#contact" class="pricing-cta primary">Book a Demo</a>
+        </div>
+        <div class="pricing-card reveal reveal-delay-3">
+          <div class="pricing-name">Multi-Site</div>
+          <div class="pricing-desc">5+ providers or multiple locations. Custom integration and SLA.</div>
+          <div class="pricing-price">
+            <span class="price-amount">Custom</span>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="check">✓</span> Everything in Full Practice</li>
+            <li class="pricing-feature"><span class="check">✓</span> Multi-location management</li>
+            <li class="pricing-feature"><span class="check">✓</span> Custom EHR/PMS integration</li>
+            <li class="pricing-feature"><span class="check">✓</span> Dedicated implementation team</li>
+            <li class="pricing-feature"><span class="check">✓</span> 99.9% uptime SLA</li>
+            <li class="pricing-feature"><span class="check">✓</span> HIPAA Business Associate Agreement</li>
+            <li class="pricing-feature"><span class="check">✓</span> Custom analytics + reporting</li>
+          </ul>
+          <a href="#contact" class="pricing-cta outline">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section id="testimonials">
+    <div class="container">
+      <p class="section-label reveal">Results</p>
+      <h2 class="section-title reveal">Practices that stopped<br>losing money</h2>
+      <div class="testimonials-grid" style="margin-top:2.5rem">
+        <div class="testimonial-card reveal reveal-delay-1">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-quote">"We were at a 21% no-show rate. After 60 days with PracticeAI, we're at 4%. That's roughly $180,000 a year back in revenue. I wish I'd done this three years ago."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">DM</div>
+            <div>
+              <div class="author-name">Dr. David M.</div>
+              <div class="author-title">Family Medicine — Roseville, CA</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card reveal reveal-delay-2">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-quote">"Insurance verification used to take my team 2 hours every morning. Now it's done before we arrive. We've had zero surprise denials in the last 4 months. Our billing team is in shock."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">SR</div>
+            <div>
+              <div class="author-name">Dr. Sarah R.</div>
+              <div class="author-title">Dental Practice Owner — Folsom, CA</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card reveal reveal-delay-3">
+          <div class="testimonial-stars">★★★★★</div>
+          <p class="testimonial-quote">"Our recall rate was terrible. We'd send a letter, maybe get 30% back. PracticeAI's sequences bring back 68% of due patients within 45 days. It runs itself. I just see the calendar fill up."</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">JK</div>
+            <div>
+              <div class="author-name">Jennifer K.</div>
+              <div class="author-title">Practice Administrator — Sacramento, CA</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <p class="section-label reveal" style="text-align:center">Common Questions</p>
+      <h2 class="section-title reveal" style="text-align:center;margin-bottom:2.5rem">Before you ask,<br>here are the answers.</h2>
+      <div class="faq-list">
+        <div class="faq-item reveal">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            Does PracticeAI integrate with my EHR/PMS?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Yes. We have pre-built integrations with the major systems — Athenahealth, eClinicalWorks, Dentrix, Eaglesoft, Kareo, Office Ally, and 40+ others. For less common systems, we use a secure API bridge that doesn't require any changes to your existing setup. Implementation takes 3–5 business days.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            Is this HIPAA compliant?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Yes, fully. PracticeAI operates as a HIPAA Business Associate. We sign a BAA with every practice. All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Patient data is never used to train AI models. We undergo annual third-party security audits. Full documentation available upon request.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            How long does setup take?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">Most practices are fully operational within 7–10 business days. Week 1 covers EHR integration, workflow configuration, and staff training (2 hours, done remotely). Week 2 is go-live with a dedicated implementation manager watching your first week of results. We don't consider it "done" until you've seen your first no-show rate report.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            What if my patients don't respond to texts?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">We use a multi-channel cascade: SMS first (highest response), then email, then voice call. If a patient doesn't respond to SMS, we escalate automatically. Our system also tracks preference per patient — if someone consistently responds to calls but ignores texts, we learn that. Response rate averages 91% across all channels within 24 hours of appointment day.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            What does the 90-day guarantee actually cover?
+            <span class="faq-icon">+</span>
+          </div>
+          <div class="faq-answer">If you don't recover at least 3x our monthly fee in documented value (no-show reduction + staff time savings + recall revenue) within 90 days, we refund the difference. We track it together using your existing data, not estimates. This guarantee applies to all plans. There are no asterisks.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta">
+    <div class="container" style="text-align:center">
+      <p class="section-label reveal" style="display:inline-block">For practices that are done leaving money on the table</p>
+      <h2 class="cta-title reveal">Your practice deserves<br>to run like one.</h2>
+      <p class="cta-sub reveal">Book a 30-minute demo. We'll show you exactly what PracticeAI would recover in your practice — with your numbers, not hypotheticals.</p>
+      <div class="hero-ctas reveal">
+        <a href="#contact" class="btn-primary">Book a Free Demo ›</a>
+        <a href="tel:+19165550100" class="btn-secondary">📞 (916) 555-0100</a>
+      </div>
+      <div class="guarantee reveal">🛡️ 90-day performance guarantee — recover 3x our fee or we refund the difference</div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="contact-grid">
+        <div>
+          <p class="section-label reveal">Get in Touch</p>
+          <h2 class="section-title reveal">Ready to stop the bleeding?</h2>
+          <p class="section-sub reveal">Fill out the form and we'll reach out within 2 hours during business hours to schedule your demo.</p>
+          <div class="contact-info">
+            <div class="contact-info-item reveal">
+              <div class="contact-info-icon">📍</div>
+              <div>
+                <div class="contact-info-label">SERVICE AREA</div>
+                <div class="contact-info-value">Sacramento &amp; Placer County, CA</div>
+              </div>
+            </div>
+            <div class="contact-info-item reveal">
+              <div class="contact-info-icon">📞</div>
+              <div>
+                <div class="contact-info-label">PHONE</div>
+                <div class="contact-info-value">(916) 555-0100</div>
+              </div>
+            </div>
+            <div class="contact-info-item reveal">
+              <div class="contact-info-icon">✉️</div>
+              <div>
+                <div class="contact-info-label">EMAIL</div>
+                <div class="contact-info-value">hello@practiceai.com</div>
+              </div>
+            </div>
+            <div class="contact-info-item reveal">
+              <div class="contact-info-icon">⏰</div>
+              <div>
+                <div class="contact-info-label">RESPONSE TIME</div>
+                <div class="contact-info-value">Within 2 hours (M–F, 9am–6pm PT)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="contact-form reveal">
+          <h3 style="font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:1.5rem">Book a Free Demo</h3>
+          <div class="form-row">
+            <div class="form-field">
+              <label>FIRST NAME</label>
+              <input type="text" placeholder="Sarah" />
+            </div>
+            <div class="form-field">
+              <label>LAST NAME</label>
+              <input type="text" placeholder="Johnson" />
+            </div>
+          </div>
+          <div class="form-field">
+            <label>PRACTICE NAME</label>
+            <input type="text" placeholder="Roseville Family Medicine" />
+          </div>
+          <div class="form-field">
+            <label>SPECIALTY</label>
+            <select>
+              <option>Family Medicine / General Practice</option>
+              <option>Internal Medicine</option>
+              <option>Pediatrics</option>
+              <option>Dental / Oral Health</option>
+              <option>Orthodontics</option>
+              <option>OB/GYN</option>
+              <option>Dermatology</option>
+              <option>Chiropractic</option>
+              <option>Physical Therapy</option>
+              <option>Mental Health</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label>PHONE</label>
+              <input type="tel" placeholder="(916) 555-0100" />
+            </div>
+            <div class="form-field">
+              <label>NUMBER OF PROVIDERS</label>
+              <select>
+                <option>1 provider</option>
+                <option>2–3 providers</option>
+                <option>4–6 providers</option>
+                <option>7+ providers</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>BIGGEST PAIN POINT</label>
+            <textarea rows="3" placeholder="e.g. No-shows are killing our schedule, insurance verification takes too long..."></textarea>
+          </div>
+          <button class="form-submit">Request My Free Demo →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo-icon" style="width:28px;height:28px;font-size:0.75rem">P+</div>
+        <span class="footer-brand-name">PracticeAI</span>
+      </div>
+      <div class="footer-links">
+        <a href="#pain">Problems</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#contact">Contact</a>
+        <a href="#">Privacy</a>
+        <a href="#">HIPAA BAA</a>
+      </div>
+      <div class="footer-copy">© 2026 PracticeAI · A Winn Ventures Company · Sacramento, CA</div>
+    </div>
+  </footer>
+
+  <script>
+    // ---- THREE.JS PARTICLE FIELD ----
+    (function() {
+      const canvas = document.getElementById('hero-canvas');
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 200);
+      camera.position.z = 50;
+
+      // Particles
+      const COUNT = 900;
+      const positions = new Float32Array(COUNT * 3);
+      for (let i = 0; i < COUNT; i++) {
+        positions[i*3]   = (Math.random() - 0.5) * 160;
+        positions[i*3+1] = (Math.random() - 0.5) * 120;
+        positions[i*3+2] = (Math.random() - 0.5) * 80;
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.45, color: 0x2563eb, transparent: true, opacity: 0.7 });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+
+      // Pulse ring
+      const ringGeo = new THREE.RingGeometry(18, 18.3, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x0d9488, side: THREE.DoubleSide, transparent: true, opacity: 0.25 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      scene.add(ring);
+
+      function resize() {
+        const w = canvas.parentElement.offsetWidth;
+        const h = canvas.parentElement.offsetHeight;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      let t = 0;
+      function animate() {
+        requestAnimationFrame(animate);
+        t += 0.004;
+        points.rotation.y = t * 0.08;
+        points.rotation.x = t * 0.03;
+        ring.scale.setScalar(1 + Math.sin(t * 1.5) * 0.04);
+        ringMat.opacity = 0.15 + Math.sin(t * 1.5) * 0.1;
+        renderer.render(scene, camera);
+      }
+      animate();
+    })();
+
+    // ---- ROI CALCULATOR ----
+    function calcROI() {
+      const appts = parseFloat(document.getElementById('calc-appts').value) || 0;
+      const val   = parseFloat(document.getElementById('calc-value').value) || 0;
+      const ns    = parseFloat(document.getElementById('calc-noshows').value) || 0;
+      const staff = parseFloat(document.getElementById('calc-staff').value) || 0;
+
+      const monthlyNoshows = appts * (ns / 100);
+      const recoveredNoshows = monthlyNoshows * 0.79 * val * 12;
+      const staffSavings = staff * 2.1 * 22 * 12 * 28; // 2.1 hrs/day, 22 work days, $28/hr
+      const total = recoveredNoshows + staffSavings;
+
+      function fmt(n) {
+        if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+        if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+        return '$' + Math.round(n);
+      }
+
+      document.getElementById('calc-noshowrecovery').textContent = fmt(recoveredNoshows);
+      document.getElementById('calc-staffsavings').textContent = fmt(staffSavings);
+      document.getElementById('calc-totalroi').textContent = fmt(total);
+    }
+    calcROI();
+
+    // ---- FAQ ACCORDION ----
+    function toggleFaq(el) {
+      const item = el.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    }
+
+    // ---- SCROLL REVEAL ----
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
